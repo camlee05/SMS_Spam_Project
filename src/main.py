@@ -1,5 +1,10 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import nltk
+
+from nltk.corpus import stopwords
+from nltk.stem.porter import PorterStemmer
+from nltk.tokenize import word_tokenize
 
 df = pd.read_csv("data/spam.csv", encoding='latin-1')
 
@@ -36,3 +41,43 @@ print(df.head())
 
 # So sánh độ dài trung bình
 print(df.groupby('label')['message_length'].mean())
+
+nltk.download('punkt')
+nltk.download('punkt_tab')
+nltk.download('stopwords')
+
+ps = PorterStemmer()
+stop_words = set(stopwords.words('english'))
+
+def transform_text(text):
+    text = text.lower()
+    text = word_tokenize(text)
+
+    y = []
+
+    for i in text:
+        if i.isalnum():
+            y.append(i)
+
+    text = y[:]
+    y.clear()
+
+    for i in text:
+        if i not in stop_words:
+            y.append(i)
+
+    text = y[:]
+    y.clear()
+
+    for i in text:
+        y.append(ps.stem(i))
+
+    return " ".join(y)
+
+# test
+print(transform_text("FREE entry!!! Win money now!!!"))
+
+# preprocess toàn bộ dataset
+df['processed_text'] = df['message'].apply(transform_text)
+
+print(df[['message', 'processed_text']].head())
